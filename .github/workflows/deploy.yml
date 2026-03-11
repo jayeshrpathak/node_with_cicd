@@ -19,5 +19,5 @@ jobs:
             export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin:/Applications/Docker.app/Contents/Resources/bin
             cd ~/Desktop/Deployment/mac_os_as_server
             git pull origin main 
-            docker-compose down 
-            DOCKER_CONFIG=$(mktemp -d) docker-compose up -d --build
+            docker compose down 
+            docker compose up -d --build
