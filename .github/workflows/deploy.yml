@@ -10,32 +10,23 @@ jobs:
         uses: actions/checkout@v4
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          MAC_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
+          envs: MAC_PASSWORD
           script: |
             export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin:/Applications/Docker.app/Contents/Resources/bin
 
+            # 1. Explicitly unlock the macOS keychain for this headless SSH session
+            security unlock-keychain -p "$MAC_PASSWORD" ~/Library/Keychains/login.keychain-db
+
+            # 2. Proceed with the deployment
             cd ~/Desktop/Deployment/mac_os_as_server
             git pull origin main 
 
-            # 1. Create a clean temporary Docker configuration directory
-            export DOCKER_CONFIG=$(mktemp -d)
-
-            # 2. Explicitly override the Mac default by disabling the credsStore
-            cat <<EOF > $DOCKER_CONFIG/config.json
-            {
-              "auths": {},
-              "credsStore": ""
-            }
-            EOF
-
-            # 3. Link the CLI plugins so 'compose' and 'buildx' function normally
-            mkdir -p ~/.docker/cli-plugins
-            ln -s ~/.docker/cli-plugins $DOCKER_CONFIG/cli-plugins
-
-            # 4. Run the standard Docker Compose commands
             docker compose down 
             docker compose up -d --build
