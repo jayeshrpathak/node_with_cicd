@@ -16,7 +16,10 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
+            # 1. Export the PATH so Docker can find its credential helper
+            # This covers both Intel Macs (/usr/local/bin) and Apple Silicon Macs (/opt/homebrew/bin)
+            export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin:/Applications/Docker.app/Contents/Resources/bin
             cd ~/Desktop/Deployment/mac_os_as_server
             git pull origin main 
-            /usr/local/bin/docker compose down 
-            /usr/local/bin/docker compose up -d --build
+            docker compose down 
+            docker compose up -d --build
