@@ -21,8 +21,21 @@ jobs:
             cd ~/Desktop/Deployment/mac_os_as_server
             git pull origin main 
 
-            # Using the hyphenated standalone binary
-            docker-compose down 
+            # 1. Create a clean temporary Docker configuration directory
+            export DOCKER_CONFIG=$(mktemp -d)
 
-            # Forcing Docker to use an empty config to bypass the keychain lock
-            DOCKER_CONFIG=$(mktemp -d) docker-compose up -d --build
+            # 2. Explicitly override the Mac default by disabling the credsStore
+            cat <<EOF > $DOCKER_CONFIG/config.json
+            {
+              "auths": {},
+              "credsStore": ""
+            }
+            EOF
+
+            # 3. Link the CLI plugins so 'compose' and 'buildx' function normally
+            mkdir -p ~/.docker/cli-plugins
+            ln -s ~/.docker/cli-plugins $DOCKER_CONFIG/cli-plugins
+
+            # 4. Run the standard Docker Compose commands
+            docker compose down 
+            docker compose up -d --build
